@@ -313,7 +313,7 @@ class XMLSecurityKey
      * @param bool $isCert
      * @throws Exception
      */
-    public function loadKey($key, $isFile=false, $isCert = false)
+    public function loadKey($key, $isFile=false, $isCert = false, $trustCert = false)
     {
         if ($isFile) {
             $this->key = file_get_contents($key);
@@ -321,6 +321,13 @@ class XMLSecurityKey
             $this->key = $key;
         }
         if ($isCert) {
+            if ($trustCert) {
+                $certIsTrusted = openssl_x509_checkpurpose($this->key, X509_PURPOSE_SSL_CLIENT);
+                if (!$certIsTrusted) {
+                    throw new Exception('Certificate is not trusted');
+                }
+            }
+
             $this->key = openssl_x509_read($this->key);
             openssl_x509_export($this->key, $str_cert);
             $this->x509Certificate = $str_cert;
